@@ -1,5 +1,5 @@
-use libc::{c_int, c_uint, c_void, FILE};
-use MtrNode;
+use crate::MtrNode;
+use libc::{FILE, c_int, c_uint, c_void};
 
 /// Default flag value in `Mtr_MakeGroup`.
 pub const MTR_DEFAULT: c_uint = 0;
@@ -12,7 +12,7 @@ pub const MTR_FIXED: c_uint = 4;
 /// See `Mtr_MakeGroup`.
 pub const MTR_NEWNODE: c_uint = 8;
 
-extern "C" {
+unsafe extern "C" {
     pub fn Mtr_AllocNode() -> *mut MtrNode;
     pub fn Mtr_DeallocNode(node: *mut MtrNode) -> c_void;
     pub fn Mtr_InitTree() -> *mut MtrNode;

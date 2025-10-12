@@ -3,7 +3,9 @@ on: [push]
 env:
   # A fixed version used for testing, so that the builds don't
   # spontaneously break after a few years.
-  RUST_VERSION: "1.53.0"
+  RUST_VERSION: "1.90.0"
+  CARGO_TERM_COLOR: always
+
 jobs:
   # Checks syntax formatting.
   fmt:
@@ -12,17 +14,13 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-      - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - uses: actions/checkout@v4
+      - name: Install rust version
+        run: rustup install ${RUST_VERSION}
+      - name: Add rustfmt
+        run: rustup +${RUST_VERSION} component add rustfmt
+      - name: Check formatting
+        run: cargo +${RUST_VERSION} fmt -- --check
 
   # Run basic code validity check.
   check:
@@ -32,15 +30,11 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
+      - uses: actions/checkout@v4
+      - name: Install rust version
+        run: rustup install ${RUST_VERSION}
+      - name: check
+        run: cargo +${RUST_VERSION} check
 
   # Run tests.
   test:
@@ -50,15 +44,11 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - uses: actions/checkout@v4
+      - name: Install rust version
+        run: rustup install ${RUST_VERSION}
+      - name: check
+        run: cargo +${RUST_VERSION} test
 
   # Run tests on macOS.
   test-macos:
@@ -68,15 +58,11 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - uses: actions/checkout@v4
+      - name: Install rust version
+        run: rustup install ${RUST_VERSION}
+      - name: check
+        run: cargo +${RUST_VERSION} test
 
   # Checks code style.
   clippy:
@@ -86,13 +72,10 @@ jobs:
     env:
       RUSTFLAGS: "-D warnings"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.RUST_VERSION }}
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
+      - uses: actions/checkout@v4
+      - name: Install rust version
+        run: rustup install ${RUST_VERSION}
+      - name: Add clippy
+        run: rustup +${RUST_VERSION} component add clippy
+      - name: check
+        run: cargo +${RUST_VERSION} clippy

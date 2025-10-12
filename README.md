@@ -6,7 +6,7 @@
 
 This crate provides unsafe Rust bindings for the University of Colorado decision diagram
 package (CUDD), including the DDDMP serialisation library. It uses version `3.0.0` of CUDD
-available from the unofficial [Github mirror](https://github.com/ivmai/cudd) and compiles on
+available from the unofficial [Github mirror](https://github.com/cuddorg/cudd) and compiles on
 Linux and MacOS (you should be also able to build CUDD on Windows using cygwin, but the project
 is not set-up to do it automatically).
 
@@ -33,4 +33,4 @@ a function that isn't exported yet, let us know in the issues.
 reproduced using a semi-automated method with a manual validation step (bunch of regexes
 that a human makes sure didn't break anything ;)). As such, it is possible that there
 are some minor problems that need to be sorted out. Please file an issue if you see any
-unexpected behaviour or segfaults.
+unexpected behavior or segfaults.

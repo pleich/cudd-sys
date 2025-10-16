@@ -1,6 +1,6 @@
 [![Crates.io](https://img.shields.io/crates/v/cudd-sys?style=flat-square)](https://crates.io/crates/cudd-sys)
 [![Api Docs](https://img.shields.io/badge/docs-api-yellowgreen?style=flat-square)](https://docs.rs/cudd-sys/)
-[![Continuous integration](https://img.shields.io/github/workflow/status/pclewis/cudd-sys/build?style=flat-square)](https://github.com/pclewis/cudd-sys/actions?query=workflow%3Abuild)
+[![Continuous integration](https://img.shields.io/github/actions/workflow/status/pclewis/cudd-sys/build.yml?branch=master&style=flat-square)](https://github.com/pclewis/cudd-sys/actions?query=workflow%3Abuild)
 
 # Rust Bindings for the CUDD library
 

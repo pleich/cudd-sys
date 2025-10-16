@@ -1,10 +1,10 @@
-use libc::{c_char, c_double, c_int, c_long, c_uint, c_ulong, c_void, size_t, FILE};
-use std::ops::Not;
-use std::ptr::null_mut;
-use {
+use crate::{
     DdApaDigit, DdApaNumber, DdConstApaNumber, DdGen, DdManager, DdNode, DdTlcInfo, EpDouble,
     MtrNode,
 };
+use libc::{FILE, c_char, c_double, c_int, c_long, c_uint, c_ulong, c_void, size_t};
+use std::ops::Not;
+use std::ptr::null_mut;
 
 /// Type of the value of a terminal node.
 pub type CUDD_VALUE_TYPE = c_double;
@@ -207,7 +207,7 @@ pub unsafe fn Cudd_IsComplement(node: *mut DdNode) -> c_int {
 /// Follows the same invariants as `Cudd_ReadPerm`.
 #[inline]
 pub unsafe fn Cudd_ReadIndex(dd: *mut DdManager, index: c_int) -> c_int {
-    Cudd_ReadPerm(dd, index)
+    unsafe { Cudd_ReadPerm(dd, index) }
 }
 
 /// Iterates over the cubes of a decision diagram f. The length of the cube is the number
@@ -235,12 +235,14 @@ pub unsafe fn Cudd_ForeachCube<F: FnMut(*mut c_int, CUDD_VALUE_TYPE)>(
 ) {
     let mut cube = null_mut();
     let mut value = 0.0;
-    let gen = Cudd_FirstCube(manager, f, &mut cube, &mut value);
-    while Cudd_IsGenEmpty(gen) != 1 {
-        action(cube, value);
-        Cudd_NextCube(gen, &mut cube, &mut value);
+    unsafe {
+        let generator = Cudd_FirstCube(manager, f, &mut cube, &mut value);
+        while Cudd_IsGenEmpty(generator) != 1 {
+            action(cube, value);
+            Cudd_NextCube(generator, &mut cube, &mut value);
+        }
+        Cudd_GenFree(generator);
     }
-    Cudd_GenFree(gen);
 }
 
 /// Iterates over the primes of a Boolean function producing
@@ -263,12 +265,14 @@ pub unsafe fn Cudd_ForeachPrime<F: FnMut(*mut c_int)>(
     mut action: F,
 ) {
     let mut cube = null_mut();
-    let gen = Cudd_FirstPrime(manager, l, u, &mut cube);
-    while Cudd_IsGenEmpty(gen) != 1 {
-        action(cube);
-        Cudd_NextPrime(gen, &mut cube);
+    unsafe {
+        let generator = Cudd_FirstPrime(manager, l, u, &mut cube);
+        while Cudd_IsGenEmpty(generator) != 1 {
+            action(cube);
+            Cudd_NextPrime(generator, &mut cube);
+        }
+        Cudd_GenFree(generator);
     }
-    Cudd_GenFree(gen);
 }
 
 /// Iterates over the nodes of a decision diagram `f`. See also `Cudd_FirstNode`.
@@ -291,12 +295,14 @@ pub unsafe fn Cudd_ForeachNode<F: FnMut(*mut DdNode)>(
     mut action: F,
 ) {
     let mut node = null_mut();
-    let gen = Cudd_FirstNode(manager, f, &mut node);
-    while Cudd_IsGenEmpty(gen) != 1 {
-        action(node);
-        Cudd_NextNode(gen, &mut node);
+    unsafe {
+        let generator = Cudd_FirstNode(manager, f, &mut node);
+        while Cudd_IsGenEmpty(generator) != 1 {
+            action(node);
+            Cudd_NextNode(generator, &mut node);
+        }
+        Cudd_GenFree(generator);
     }
-    Cudd_GenFree(gen);
 }
 
 /// Iterates over the paths of a ZDD `f`.
@@ -320,15 +326,17 @@ pub unsafe fn Cudd_zddForeachPath<F: FnMut(*mut c_int)>(
     mut action: F,
 ) {
     let mut path = null_mut();
-    let gen = Cudd_zddFirstPath(manager, f, &mut path);
-    while Cudd_IsGenEmpty(gen) != 1 {
-        action(path);
-        Cudd_zddNextPath(gen, &mut path);
+    unsafe {
+        let generator = Cudd_zddFirstPath(manager, f, &mut path);
+        while Cudd_IsGenEmpty(generator) != 1 {
+            action(path);
+            Cudd_zddNextPath(generator, &mut path);
+        }
+        Cudd_GenFree(generator);
     }
-    Cudd_GenFree(gen);
 }
 
-extern "C" {
+unsafe extern "C" {
     pub fn Cudd_addNewVar(dd: *mut DdManager) -> *mut DdNode;
     pub fn Cudd_addNewVarAtLevel(dd: *mut DdManager, level: c_int) -> *mut DdNode;
     pub fn Cudd_bddNewVar(dd: *mut DdManager) -> *mut DdNode;
@@ -378,7 +386,7 @@ extern "C" {
     pub fn Cudd_AutodynEnable(unique: *mut DdManager, method: Cudd_ReorderingType) -> c_void;
     pub fn Cudd_AutodynDisable(unique: *mut DdManager) -> c_void;
     pub fn Cudd_ReorderingStatus(unique: *mut DdManager, method: *mut Cudd_ReorderingType)
-        -> c_int;
+    -> c_int;
     pub fn Cudd_AutodynEnableZdd(unique: *mut DdManager, method: Cudd_ReorderingType) -> c_void;
     pub fn Cudd_AutodynDisableZdd(unique: *mut DdManager) -> c_void;
     pub fn Cudd_ReorderingStatusZdd(
@@ -474,7 +482,7 @@ extern "C" {
     pub fn Cudd_ReadNodeCount(dd: *mut DdManager) -> c_long;
     pub fn Cudd_zddReadNodeCount(dd: *mut DdManager) -> c_long;
     pub fn Cudd_AddHook(dd: *mut DdManager, f: DD_HOOK_FUNCTION, hook_type: Cudd_HookType)
-        -> c_int;
+    -> c_int;
     pub fn Cudd_RemoveHook(
         dd: *mut DdManager,
         f: DD_HOOK_FUNCTION,
@@ -486,7 +494,7 @@ extern "C" {
         hook_type: Cudd_HookType,
     ) -> c_int;
     pub fn Cudd_StdPreReordHook(dd: *mut DdManager, str: *const c_char, data: *mut c_void)
-        -> c_int;
+    -> c_int;
     pub fn Cudd_StdPostReordHook(
         dd: *mut DdManager,
         str: *const c_char,
@@ -607,9 +615,9 @@ extern "C" {
         g: *mut *mut DdNode,
     ) -> *mut DdNode;
     pub fn Cudd_addNor(dd: *mut DdManager, f: *mut *mut DdNode, g: *mut *mut DdNode)
-        -> *mut DdNode;
+    -> *mut DdNode;
     pub fn Cudd_addXor(dd: *mut DdManager, f: *mut *mut DdNode, g: *mut *mut DdNode)
-        -> *mut DdNode;
+    -> *mut DdNode;
     pub fn Cudd_addXnor(
         dd: *mut DdManager,
         f: *mut *mut DdNode,
@@ -829,7 +837,7 @@ extern "C" {
     pub fn Cudd_bddBooleanDiff(manager: *mut DdManager, f: *mut DdNode, x: c_int) -> *mut DdNode;
     pub fn Cudd_bddVarIsDependent(dd: *mut DdManager, f: *mut DdNode, var: *mut DdNode) -> c_int;
     pub fn Cudd_bddCorrelation(manager: *mut DdManager, f: *mut DdNode, g: *mut DdNode)
-        -> c_double;
+    -> c_double;
     pub fn Cudd_bddCorrelationWeights(
         manager: *mut DdManager,
         f: *mut DdNode,
@@ -1482,7 +1490,7 @@ extern "C" {
     ) -> c_int;
     pub fn Cudd_VectorSupport(dd: *mut DdManager, F: *mut *mut DdNode, n: c_int) -> *mut DdNode;
     pub fn Cudd_VectorSupportIndex(dd: *mut DdManager, F: *mut *mut DdNode, n: c_int)
-        -> *mut c_int;
+    -> *mut c_int;
     pub fn Cudd_VectorSupportSize(dd: *mut DdManager, F: *mut *mut DdNode, n: c_int) -> c_int;
     pub fn Cudd_ClassifySupport(
         dd: *mut DdManager,
@@ -1526,7 +1534,7 @@ extern "C" {
         value: *mut CUDD_VALUE_TYPE,
     ) -> *mut DdGen;
     pub fn Cudd_NextCube(
-        gen: *mut DdGen,
+        r#gen: *mut DdGen,
         cube: *mut *mut c_int,
         value: *mut CUDD_VALUE_TYPE,
     ) -> c_int;
@@ -1536,7 +1544,7 @@ extern "C" {
         u: *mut DdNode,
         cube: *mut *mut c_int,
     ) -> *mut DdGen;
-    pub fn Cudd_NextPrime(gen: *mut DdGen, cube: *mut *mut c_int) -> c_int;
+    pub fn Cudd_NextPrime(r#gen: *mut DdGen, cube: *mut *mut c_int) -> c_int;
     pub fn Cudd_bddComputeCube(
         dd: *mut DdManager,
         vars: *mut *mut DdNode,
@@ -1552,10 +1560,10 @@ extern "C" {
     pub fn Cudd_CubeArrayToBdd(dd: *mut DdManager, array: *mut c_int) -> *mut DdNode;
     pub fn Cudd_BddToCubeArray(dd: *mut DdManager, cube: *mut DdNode, array: *mut c_int) -> c_int;
     pub fn Cudd_FirstNode(dd: *mut DdManager, f: *mut DdNode, node: *mut *mut DdNode)
-        -> *mut DdGen;
-    pub fn Cudd_NextNode(gen: *mut DdGen, node: *mut *mut DdNode) -> c_int;
-    pub fn Cudd_GenFree(gen: *mut DdGen) -> c_int;
-    pub fn Cudd_IsGenEmpty(gen: *mut DdGen) -> c_int;
+    -> *mut DdGen;
+    pub fn Cudd_NextNode(r#gen: *mut DdGen, node: *mut *mut DdNode) -> c_int;
+    pub fn Cudd_GenFree(r#gen: *mut DdGen) -> c_int;
+    pub fn Cudd_IsGenEmpty(r#gen: *mut DdGen) -> c_int;
     pub fn Cudd_IndicesToCube(dd: *mut DdManager, array: *mut c_int, n: c_int) -> *mut DdNode;
     pub fn Cudd_PrintVersion(fp: *mut FILE) -> c_void;
     pub fn Cudd_AverageDistance(dd: *mut DdManager) -> c_double;
@@ -1614,7 +1622,7 @@ extern "C" {
         f: *mut DdNode,
         path: *mut *mut c_int,
     ) -> *mut DdGen;
-    pub fn Cudd_zddNextPath(gen: *mut DdGen, path: *mut *mut c_int) -> c_int;
+    pub fn Cudd_zddNextPath(r#gen: *mut DdGen, path: *mut *mut c_int) -> c_int;
     pub fn Cudd_zddCoverPathToString(
         zdd: *mut DdManager,
         path: *mut c_int,

@@ -1,5 +1,5 @@
-use libc::{c_char, c_int, FILE};
-use {DdManager, DdNode};
+use crate::{DdManager, DdNode};
+use libc::{FILE, c_char, c_int};
 
 /// Version of DDDMP format.
 pub const DDDMP_VERSION: &str = "DDDMP-2.0";
@@ -65,7 +65,7 @@ pub enum Dddmp_RootMatchType {
     DDDMP_ROOT_MATCHLIST,
 }
 
-extern "C" {
+unsafe extern "C" {
     pub fn Dddmp_Text2Bin(filein: *mut c_char, fileout: *mut c_char) -> c_int;
     pub fn Dddmp_Bin2Text(filein: *mut c_char, fileout: *mut c_char) -> c_int;
     pub fn Dddmp_cuddBddDisplayBinary(fileIn: *mut c_char, fileOut: *mut c_char) -> c_int;

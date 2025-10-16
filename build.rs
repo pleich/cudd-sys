@@ -1,23 +1,25 @@
 extern crate autotools;
 
+use SHA256Status::{Mismatch, Unknown};
 use autotools::Config;
 use std::env;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use MD5Status::{Mismatch, Unknown};
 
-const PACKAGE_URL: &str = "https://github.com/ivmai/cudd/archive/refs/tags/cudd-3.0.0.tar.gz";
-const PACKAGE_MD5: &str = "edca9c69528256ca8ae37be9cedef73f";
+const PACKAGE_URL: &str =
+    "https://github.com/cuddorg/cudd/releases/download/cudd-3.0.0/cudd-3.0.0.tar.gz";
+const PACKAGE_SHA256: &str = "5fe145041c594689e6e7cf4cd623d5f2b7c36261708be8c9a72aed72cf67acce";
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum FetchError {
     CommandError(std::process::ExitStatus),
     IOError(std::io::Error),
     PathExists,
 }
 
-enum MD5Status {
+enum SHA256Status {
     Match,
     Mismatch,
     Unknown,
@@ -33,7 +35,7 @@ impl From<std::io::Error> for FetchError {
 fn run_command(cmd: &mut Command) -> Result<(String, String), FetchError> {
     let output = cmd.output()?;
 
-    return if output.status.success() {
+    if output.status.success() {
         Ok((
             String::from_utf8(output.stdout).unwrap(),
             String::from_utf8(output.stderr).unwrap(),
@@ -41,11 +43,15 @@ fn run_command(cmd: &mut Command) -> Result<(String, String), FetchError> {
     } else {
         eprintln!("Command {:?} exited with status {}", cmd, output.status);
         Err(FetchError::CommandError(output.status))
-    };
+    }
 }
 
-/// Fetch a file from a URL if it does not already exist in out_dir and verify its md5sum if possible.
-fn fetch_package(out_dir: &str, url: &str, md5: &str) -> Result<(PathBuf, MD5Status), FetchError> {
+/// Fetch a file from a URL if it does not already exist in out_dir and verify its sha256sum if possible.
+fn fetch_package(
+    out_dir: &str,
+    url: &str,
+    sha256: &str,
+) -> Result<(PathBuf, SHA256Status), FetchError> {
     let out_path = Path::new(&out_dir);
     let target_path = out_path.join(Path::new(url).file_name().unwrap());
     let target_path_str = target_path.clone().into_os_string().into_string().unwrap();
@@ -55,7 +61,7 @@ fn fetch_package(out_dir: &str, url: &str, md5: &str) -> Result<(PathBuf, MD5Sta
             // Path does not exist! Start download...
             println!("Downloading {} to {}", url, target_path_str);
             let mut command = Command::new("curl");
-            command.args(&["-L", url, "-o", target_path_str.as_str()]);
+            command.args(["-L", url, "-o", target_path_str.as_str()]);
             run_command(&mut command)?;
         }
         Ok(data) if data.is_file() => {
@@ -65,20 +71,20 @@ fn fetch_package(out_dir: &str, url: &str, md5: &str) -> Result<(PathBuf, MD5Sta
         Err(error) => return Err(FetchError::from(error)),
     }
 
-    // Now run md5 sum check:
-    let mut command_1 = Command::new("md5sum");
+    // Now run sha256 sum check:
+    let mut command_1 = Command::new("sha256sum");
     command_1.arg(target_path.clone());
-    let mut command_2 = Command::new("md5");
+    let mut command_2 = Command::new("shasum -a 256");
     command_2.arg(target_path.clone());
-    let md5_result = run_command(&mut command_1).or_else(|_| run_command(&mut command_2));
+    let sha256_result = run_command(&mut command_1).or_else(|_| run_command(&mut command_2));
 
-    let md5_status = match md5_result {
-        Err(_) => MD5Status::Unknown,
-        Ok((output, _)) if output.contains(md5) => MD5Status::Match,
-        _ => MD5Status::Mismatch,
+    let sha256_status = match sha256_result {
+        Err(_) => SHA256Status::Unknown,
+        Ok((output, _)) if output.contains(sha256) => SHA256Status::Match,
+        _ => SHA256Status::Mismatch,
     };
 
-    Ok((target_path, md5_status))
+    Ok((target_path, sha256_status))
 }
 
 fn main() -> Result<(), String> {
@@ -91,13 +97,13 @@ fn main() -> Result<(), String> {
     let out_dir = env::var("OUT_DIR")
         .map_err(|_| "Environmental variable `OUT_DIR` not defined.".to_string())?;
 
-    let (tar_path, md5_status) = fetch_package(&out_dir, PACKAGE_URL, PACKAGE_MD5)
+    let (tar_path, sha256_status) = fetch_package(&out_dir, PACKAGE_URL, PACKAGE_SHA256)
         .map_err(|e| format!("Error downloading CUDD package: {:?}.", e))?;
     let tar_path_str = tar_path.to_str().unwrap().to_string();
 
-    match md5_status {
-        Unknown => eprintln!("WARNING: MD5 not computed. Package validation skipped."),
-        Mismatch => return Err("CUDD package MD5 hash mismatch.".to_string()),
+    match sha256_status {
+        Unknown => eprintln!("WARNING: SHA256 not computed. Package validation skipped."),
+        Mismatch => return Err("CUDD package SHA256 hash mismatch.".to_string()),
         _ => (),
     }
 
@@ -113,7 +119,7 @@ fn main() -> Result<(), String> {
 
     // un-tar package, ignoring the name of the top level folder, dumping into cudd_path instead.
     let mut tar_command = Command::new("tar");
-    tar_command.args(&[
+    tar_command.args([
         "xf",
         &tar_path_str,
         "--strip-components=1",

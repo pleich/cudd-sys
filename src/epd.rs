@@ -1,8 +1,8 @@
+use crate::EpDouble;
 use libc::{c_int, c_void};
 use std::os::raw::{c_char, c_double};
-use EpDouble;
 
-extern "C" {
+unsafe extern "C" {
     pub fn EpdAlloc() -> *mut EpDouble;
     pub fn EpdCmp(key1: *const c_void, key2: *const c_void) -> c_int;
     pub fn EpdFree(epd: *mut EpDouble) -> c_void;

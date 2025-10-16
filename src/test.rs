@@ -1,4 +1,4 @@
-use cudd::*;
+use crate::cudd::*;
 use libc::{c_int, c_void};
 use std::ptr::null_mut;
 

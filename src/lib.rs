@@ -5,7 +5,7 @@
 //! is not set-up to do it automatically).
 //!
 //! > On Linux and macOS, you should ideally have `autoconf`, `automake` and `libtool` installed
-//!  to build CUDD. And of course, some C/C++ compiler (`clang`, `gcc`, etc.).
+//! > to build CUDD. And of course, some C/C++ compiler (`clang`, `gcc`, etc.).
 //!
 //! In the root module, you will find declarations of the C structs and types used
 //! throughout CUDD. The main API of the CUDD package is then exported in `::cudd`. However,

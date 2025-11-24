@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const PACKAGE_URL: &str =
-    "https://github.com/cuddorg/cudd/releases/download/cudd-3.0.0/cudd-3.0.0.tar.gz";
+    "https://github.com/cuddorg/cudd/releases/download/3.0.0/cudd-3.0.0.tar.gz";
 const PACKAGE_SHA256: &str = "5fe145041c594689e6e7cf4cd623d5f2b7c36261708be8c9a72aed72cf67acce";
 
 #[derive(Debug)]

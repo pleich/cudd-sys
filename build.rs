@@ -1,15 +1,14 @@
-extern crate autotools;
-
 use SHA256Status::{Mismatch, Unknown};
-use autotools::Config;
+use cmake::Config;
+
 use std::env;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const PACKAGE_URL: &str =
-    "https://github.com/cuddorg/cudd/releases/download/3.0.0/cudd-3.0.0.tar.gz";
-const PACKAGE_SHA256: &str = "5fe145041c594689e6e7cf4cd623d5f2b7c36261708be8c9a72aed72cf67acce";
+const PACKAGE_URL: &str = "https://github.com/cuddorg/cudd/archive/refs/tags/4.0.0-rc2.tar.gz";
+
+const PACKAGE_SHA256: &str = "f91d8ef67cdbdef93e09df6171a1274791a4918726e240e42ac0aba53d14b4dd";
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -128,8 +127,11 @@ fn main() -> Result<(), String> {
     ]);
     run_command(&mut tar_command).map_err(|e| format!("Error decompressing CUDD: {:?}", e))?;
 
-    // Enable dddmp when building.
-    let build_output = Config::new(cudd_path).enable("dddmp", None).build();
+    let build_output = Config::new(cudd_path)
+        .define("CMAKE_INSTALL_LIBDIR", "lib") // fix the output directory of the library to `lib`
+        .define("CUDD_BUILD_CPP_API", "OFF") // disable the C++ API
+        .profile("Release")
+        .build();
 
     println!(
         "cargo:rustc-link-search=native={}",

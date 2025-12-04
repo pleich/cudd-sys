@@ -12,7 +12,7 @@ license = "CC0-1.0"
 libc = "0.2"
 
 [build-dependencies]
-autotools = "0.2.7"
+cmake = "0.1.54"
 
 [features]
 default = ["build_cudd"]
